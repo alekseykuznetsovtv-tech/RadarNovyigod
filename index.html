@@ -325,22 +325,22 @@
             if (dist > MAX_DETECTION_DIST) {
                 currentInterval = 0;
                 statusEl.style.color = '#ffbe0b';
-                statusEl.textContent = '❄️ Сканирование эфира... Полезный сигнал не обнаружен';
+                statusEl.textContent = '❄️ Сканирование эфира... Сияние не обнаружено';
                 distanceEl.textContent = '--- м';
             } else if (dist > 250) {
                 currentInterval = 1200;
                 statusEl.style.color = '#ffbe0b';
-                statusEl.textContent = '✨ Фиксация слабого полярного сигнала';
+                statusEl.textContent = '✨ Фиксация слабого полярного сияния';
                 distanceEl.textContent = roundedDist + ' м';
             } else if (dist > 80) {
                 currentInterval = 400;
                 statusEl.style.color = '#ff9900';
-                statusEl.textContent = '🔥 ВНИМАНИЕ: Рост уровня сигнала!';
+                statusEl.textContent = '🔥 ВНИМАНИЕ: Рост уровня сияния!';
                 distanceEl.textContent = roundedDist + ' м';
             } else if (dist > 25) {
                 currentInterval = 120;
                 statusEl.style.color = '#ff4d6d';
-                statusEl.textContent = '🚨 Внимание: Максимальный уровень сигнала!';
+                statusEl.textContent = '🚨 Внимание: Максимальный уровень сияния!';
                 distanceEl.textContent = roundedDist + ' м';
             } else {
                 currentInterval = 50;
