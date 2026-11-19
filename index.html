@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎄 Полярный Локатор — Новогодний выпуск</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: radial-gradient(circle at top, #12283a 0%, #070e15 100%);
+            color: #38f2ff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 25px 15px 15px 15px;
+            text-align: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* --- ГИРЛЯНДА СВЕРХУ --- */
+        .garland {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 16px;
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+            pointer-events: none;
+            border-top: 2px solid #1e3a2f;
+        }
+        .garland span {
+            width: 10px;
+            height: 14px;
+            border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+            margin-top: -2px;
+            animation: twinkle 1.8s infinite alternate;
+        }
+        .garland span:nth-child(4n+1) { background: #ff4d6d; box-shadow: 0 2px 10px #ff4d6d; animation-delay: 0s; }
+        .garland span:nth-child(4n+2) { background: #ffbe0b; box-shadow: 0 2px 10px #ffbe0b; animation-delay: 0.4s; }
+        .garland span:nth-child(4n+3) { background: #2ec4b6; box-shadow: 0 2px 10px #2ec4b6; animation-delay: 0.8s; }
+        .garland span:nth-child(4n+4) { background: #38f2ff; box-shadow: 0 2px 10px #38f2ff; animation-delay: 1.2s; }
+
+        @keyframes twinkle {
+            0% { opacity: 0.4; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* --- ПАДАЮЩИЙ СНЕГ НА ФОНЕ --- */
+        .snowflakes {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .snowflake {
+            position: absolute;
+            top: -10%;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 1.1em;
+            user-select: none;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); }
+            100% { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        /* --- КОРПУС ДЕТЕКТОРА --- */
+        .container {
+            width: 100%;
+            max-width: 420px;
+            border: 2px solid #38f2ff;
+            border-radius: 14px;
+            padding: 22px 20px;
+            box-shadow: 0 0 25px rgba(56, 242, 255, 0.22), inset 0 0 15px rgba(13, 33, 51, 0.8);
+            background: rgba(14, 26, 39, 0.92);
+            backdrop-filter: blur(5px);
+            position: relative;
+            z-index: 10;
+        }
+        h1 {
+            font-size: 1.35rem;
+            margin-top: 0;
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(255, 190, 11, 0.4);
+            padding-bottom: 12px;
+            text-transform: uppercase;
+            color: #ffbe0b;
+            text-shadow: 0 0 10px rgba(255, 190, 11, 0.35);
+        }
+        .status-box {
+            font-size: 0.95rem;
+            color: #ffbe0b;
+            margin: 15px 0 12px 0;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.35;
+            font-weight: bold;
+        }
+
+        /* --- СТИЛИ ДЛЯ ШКАЛЫ СИГНАЛА --- */
+        .scale-title {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-align: left;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        .signal-container {
+            width: 100%;
+            height: 24px;
+            background-color: #070e15;
+            border: 1px solid #38f2ff;
+            border-radius: 6px;
+            padding: 3px;
+            margin-bottom: 15px;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+        }
+        .signal-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ffbe0b 0%, #ff4d6d 65%, #2ec4b6 100%);
+            border-radius: 3px;
+            transition: width 0.4s ease-out;
+            box-shadow: 0 0 12px rgba(46, 196, 182, 0.6);
+        }
+        /* ------------------------------- */
+
+        .distance-box {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #ffffff;
+            text-shadow: 0 0 15px #38f2ff, 0 0 30px rgba(56, 242, 255, 0.4);
+        }
+        .accuracy {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            margin-bottom: 18px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #ffbe0b 0%, #fb8500 100%);
+            color: #070e15;
+            border: none;
+            padding: 16px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 190, 11, 0.45);
+            transition: transform 0.1s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .warning-box {
+            background: rgba(82, 11, 24, 0.9);
+            border: 1px solid #ff4d6d;
+            color: #ffb3c1;
+            padding: 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Новогодняя гирлянда -->
+    <div class="garland">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Снегопад -->
+    <div class="snowflakes" aria-hidden="true">
+        <div class="snowflake" style="left: 10%; animation-duration: 10s; animation-delay: 0s;">❄</div>
+        <div class="snowflake" style="left: 25%; animation-duration: 14s; animation-delay: 2s; font-size: 0.85em;">❅</div>
+        <div class="snowflake" style="left: 42%; animation-duration: 11s; animation-delay: 4s;">❆</div>
+        <div class="snowflake" style="left: 60%; animation-duration: 15s; animation-delay: 1s; font-size: 0.9em;">❄</div>
+        <div class="snowflake" style="left: 78%; animation-duration: 12s; animation-delay: 3s;">❅</div>
+        <div class="snowflake" style="left: 90%; animation-duration: 13s; animation-delay: 5s; font-size: 0.85em;">❄</div>
+    </div>
+
+    <div class="container">
+        <h1>🎄 ДЕТЕКТОР-5 ❄️</h1>
+        <div id="status" class="status-box">Нажмите кнопку для активации полярных сенсоров</div>
+        
+        <!-- Графическая шкала -->
+        <div class="scale-title">❄️ УРОВЕНЬ СИГНАЛА МАЯКА:</div>
+        <div class="signal-container">
+            <div id="signalBar" class="signal-bar"></div>
+        </div>
+
+        <div id="distance" class="distance-box">--- м</div>
+        <div id="accuracy" class="accuracy">Точность GPS: ---</div>
+        
+        <button id="startBtn" class="btn">✨ АКТИВИРОВАТЬ ДЕТЕКТОР</button>
+        
+        <div id="warning" class="warning-box"></div>
+    </div>
+
+    <script>
+        // =======================================================
+        // КОНФИГУРАЦИЯ ОБЪЕКТА (Заполните координаты центра здания)
+        // =======================================================
+        const TARGET_LAT = 67.608326; // 67.608326, 64.102802
+        const TARGET_LNG = 64.102802; // Долгота Северный бункер
+        const MAX_DETECTION_DIST = 15000; // Дистанция начала обнаружения (в метрах)
+        // =======================================================
+
+        const statusEl = document.getElementById('status');
+        const distance
