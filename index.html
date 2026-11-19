@@ -136,7 +136,6 @@
             transition: width 0.4s ease-out;
             box-shadow: 0 0 12px rgba(46, 196, 182, 0.6);
         }
-        /* ------------------------------- */
 
         .distance-box {
             font-size: 3.5rem;
@@ -183,7 +182,6 @@
 </head>
 <body>
 
-    <!-- Новогодняя гирлянда -->
     <div class="garland">
         <span></span><span></span><span></span><span></span>
         <span></span><span></span><span></span><span></span>
@@ -191,7 +189,6 @@
         <span></span><span></span><span></span><span></span>
     </div>
 
-    <!-- Снегопад -->
     <div class="snowflakes" aria-hidden="true">
         <div class="snowflake" style="left: 10%; animation-duration: 10s; animation-delay: 0s;">❄</div>
         <div class="snowflake" style="left: 25%; animation-duration: 14s; animation-delay: 2s; font-size: 0.85em;">❅</div>
@@ -202,10 +199,9 @@
     </div>
 
     <div class="container">
-        <h1>🎄 Полярный детектор ❄️</h1>
+        <h1>🎄 ДЕТЕКТОР-5 ❄️</h1>
         <div id="status" class="status-box">Нажмите кнопку для активации полярных сенсоров</div>
         
-        <!-- Графическая шкала -->
         <div class="scale-title">❄️ УРОВЕНЬ СИГНАЛА МАЯКА:</div>
         <div class="signal-container">
             <div id="signalBar" class="signal-bar"></div>
@@ -214,7 +210,7 @@
         <div id="distance" class="distance-box">--- м</div>
         <div id="accuracy" class="accuracy">Точность GPS: ---</div>
         
-        <button id="startBtn" class="btn">✨ АКТИВИРОВАТЬ ДЕТЕКТОР</button>
+        <button type="button" id="startBtn" class="btn">✨ АКТИВИРОВАТЬ ДЕТЕКТОР</button>
         
         <div id="warning" class="warning-box"></div>
     </div>
@@ -229,4 +225,195 @@
         // =======================================================
 
         const statusEl = document.getElementById('status');
-        const distance
+        const distanceEl = document.getElementById('distance');
+        const accuracyEl = document.getElementById('accuracy');
+        const startBtn = document.getElementById('startBtn');
+        const warningEl = document.getElementById('warning');
+        const signalBarEl = document.getElementById('signalBar');
+
+        let audioCtx = null;
+        let currentInterval = 0;
+        let watchId = null;
+        let isSoundLoopRunning = false;
+
+        // Проверка HTTPS (для геолокации обязателен HTTPS)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            warningEl.style.display = 'block';
+            warningEl.innerHTML = '⚠️ <b>ОШИБКА БЕЗОПАСНОСТИ:</b> Геолокация работает только по <b>HTTPS</b> (например, через GitHub Pages). При открытии файла напрямую с телефона браузер блокирует GPS.';
+        }
+
+        function getDistanceInMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c;
+        }
+
+        function initAudio() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                if (!audioCtx) {
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                // Сразу даём короткий стартовый писк по клику, чтобы разблокировать звук на iOS/Android
+                playBeep(1000, 0.05);
+            } catch (e) {
+                console.warn("Аудио недоступно:", e);
+            }
+        }
+
+        function playBeep(freq = 800, duration = 0.07) {
+            if (!audioCtx) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                // Игнорируем ошибку звука, чтобы не останавливать цикл
+            }
+        }
+
+        function soundLoop() {
+            if (currentInterval > 0) {
+                playBeep();
+                setTimeout(soundLoop, currentInterval);
+            } else {
+                setTimeout(soundLoop, 500);
+            }
+        }
+
+        function updateSignalBar(dist) {
+            if (dist >= MAX_DETECTION_DIST) {
+                signalBarEl.style.width = '0%';
+                return;
+            }
+            let percentage = Math.round(((MAX_DETECTION_DIST - dist) / (MAX_DETECTION_DIST - 15)) * 100);
+            if (percentage < 3) percentage = 3;
+            if (percentage > 100) percentage = 100;
+            
+            signalBarEl.style.width = percentage + '%';
+        }
+
+        function updateDetectorState(dist) {
+            const roundedDist = Math.round(dist);
+            updateSignalBar(dist);
+
+            if (dist > MAX_DETECTION_DIST) {
+                currentInterval = 0;
+                statusEl.style.color = '#ffbe0b';
+                statusEl.textContent = '❄️ Сканирование эфира... Полезный сигнал не обнаружен';
+                distanceEl.textContent = '--- м';
+            } else if (dist > 250) {
+                currentInterval = 1200;
+                statusEl.style.color = '#ffbe0b';
+                statusEl.textContent = '✨ Фиксация слабого полярного сигнала';
+                distanceEl.textContent = roundedDist + ' м';
+            } else if (dist > 80) {
+                currentInterval = 400;
+                statusEl.style.color = '#ff9900';
+                statusEl.textContent = '🔥 ВНИМАНИЕ: Рост уровня сигнала!';
+                distanceEl.textContent = roundedDist + ' м';
+            } else if (dist > 25) {
+                currentInterval = 120;
+                statusEl.style.color = '#ff4d6d';
+                statusEl.textContent = '🚨 Внимание: Максимальный уровень сигнала!';
+                distanceEl.textContent = roundedDist + ' м';
+            } else {
+                currentInterval = 50;
+                statusEl.style.color = '#2ec4b6';
+                statusEl.textContent = '🎄 Вы у цели! Новогодний маяк рядом!';
+                distanceEl.textContent = roundedDist + ' м';
+            }
+        }
+
+        function startSearch() {
+            initAudio();
+            startBtn.style.display = 'none';
+            statusEl.style.color = '#ffbe0b';
+            statusEl.textContent = '🛰️ Связь со спутниками GPS... Выйдите на открытое место.';
+
+            if (!("geolocation" in navigator)) {
+                statusEl.style.color = '#ff4d6d';
+                statusEl.textContent = 'Ошибка: Ваше устройство не поддерживает модуль геолокации.';
+                startBtn.style.display = 'block';
+                return;
+            }
+
+            if (!isSoundLoopRunning) {
+                isSoundLoopRunning = true;
+                soundLoop();
+            }
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+
+            watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const userLat = pos.coords.latitude;
+                    const userLng = pos.coords.longitude;
+                    const acc = Math.round(pos.coords.accuracy);
+
+                    accuracyEl.textContent = `Точность GPS: ±${acc} м`;
+
+                    const dist = getDistanceInMeters(userLat, userLng, TARGET_LAT, TARGET_LNG);
+                    updateDetectorState(dist);
+                },
+                (err) => {
+                    let msg = '';
+                    switch(err.code) {
+                        case err.PERMISSION_DENIED:
+                            msg = 'ДОСТУП ОТКЛОНЕН! Разрешите геолокацию в настройках браузера и обновите страницу.';
+                            break;
+                        case err.POSITION_UNAVAILABLE:
+                            msg = 'СБРОС СИГНАЛА GPS! Проверьте, включена ли геолокация на телефоне.';
+                            break;
+                        case err.TIMEOUT:
+                            msg = 'ТАЙМ-АУТ GPS! Спутники не ответили вовремя. Нажмите кнопку ещё раз.';
+                            break;
+                        default:
+                            msg = 'Сбой GPS: ' + err.message;
+                    }
+                    statusEl.style.color = '#ff4d6d';
+                    statusEl.innerHTML = msg;
+                    startBtn.textContent = '🔄 ПОВТОРИТЬ ЗАПУСК';
+                    startBtn.style.display = 'block';
+                },
+                options
+            );
+        }
+
+        startBtn.addEventListener('click', startSearch);
+    </script>
+</body>
+</html>
