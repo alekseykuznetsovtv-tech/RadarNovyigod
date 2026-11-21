@@ -202,7 +202,7 @@
         <h1>🎄 Полярный детектор ❄️</h1>
         <div id="status" class="status-box">Нажмите кнопку для активации полярных сенсоров</div>
         
-        <div class="scale-title">❄️ Уровень полярного сияния:</div>
+        <div class="scale-title">❄️ Уровень сияния маяка:</div>
         <div class="signal-container">
             <div id="signalBar" class="signal-bar"></div>
         </div>
@@ -330,7 +330,7 @@
             } else if (dist > 250) {
                 currentInterval = 1200;
                 statusEl.style.color = '#ffbe0b';
-                statusEl.textContent = '✨ Фиксация слабого полярного сияния';
+                statusEl.textContent = '✨ Фиксация слабого сияния';
                 distanceEl.textContent = roundedDist + ' м';
             } else if (dist > 80) {
                 currentInterval = 400;
